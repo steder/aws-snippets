@@ -3,8 +3,14 @@ import time
 from boto.ec2.autoscale import AutoScaleConnection
 
 
-def find_unused_launch_configs():
+def get_asg_connection():
     conn = AutoScaleConnection()
+    autoscale_groups = conn.get_all_groups(max_records=1)
+    return conn
+
+
+def find_unused_launch_configs():
+    conn = get_asg_connection()
     autoscale_groups = conn.get_all_groups(max_records=100)
     launch_configs = conn.get_all_launch_configurations(max_records=100)
     launch_config_names = {lc.name for lc in launch_configs}
@@ -25,7 +31,7 @@ def find_unused_launch_configs():
 
 
 def cleanup_unused_launch_configs(unused_launch_config_names, delete=False):
-    conn = AutoScaleConnection()
+    conn = get_asg_connection()
     configs = conn.get_all_launch_configurations(names=unused_launch_config_names)
     print "\nGetting ready to cleanup launch configs ... {}".format(delete and "FOR REAL" or "DRYRUN")
     for config in configs:
